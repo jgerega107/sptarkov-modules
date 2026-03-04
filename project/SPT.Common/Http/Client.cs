@@ -3,6 +3,7 @@ using System.Collections;
 using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
 using BepInEx.Logging;
@@ -12,9 +13,19 @@ using UnityEngine.Networking;
 
 namespace SPT.Common.Http;
 
-public class Client(string address, string accountId, int retries = 3)
+public class Client(string address, string accountId, string basicAuthUsername = "", string basicAuthPassword = "", int retries = 3)
 {
     private static ManualLogSource _logger = Logger.CreateLogSource(nameof(Client));
+
+    private bool HasBasicAuth => !string.IsNullOrWhiteSpace(basicAuthUsername);
+    private string BasicAuthHeaderValue => HasBasicAuth
+        ? "Basic " + Convert.ToBase64String(Encoding.UTF8.GetBytes($"{basicAuthUsername}:{basicAuthPassword ?? ""}"))
+        : null;
+
+    /// <summary>
+    /// Returns the full Basic Auth header value (e.g. "Basic dXNlcjpwYXNz") if configured, or null.
+    /// </summary>
+    public string GetBasicAuthHeaderValue() => BasicAuthHeaderValue;
 
     public HttpClient HttpClient { get; } =
         new HttpClient(
@@ -22,20 +33,26 @@ public class Client(string address, string accountId, int retries = 3)
             {
                 // set cookies in header instead
                 UseCookies = false,
-
-                // Bypass Cert validation in the httpServer - discard arguments as we dont use them
-                ServerCertificateCustomValidationCallback = (_, _, _, _) => true,
             }
         );
 
     public HttpRequestMessage CreateNewHttpRequest(HttpMethod method, string path)
     {
-        return new HttpRequestMessage()
+        var request = new HttpRequestMessage()
         {
             Method = method,
             RequestUri = new Uri(address + path),
             Headers = { { "Cookie", $"PHPSESSID={accountId}" } },
         };
+
+        // Add HTTP Basic Auth header if credentials are configured
+        if (HasBasicAuth)
+        {
+            request.Headers.Authorization = new AuthenticationHeaderValue("Basic",
+                Convert.ToBase64String(Encoding.UTF8.GetBytes($"{basicAuthUsername}:{basicAuthPassword ?? ""}")));
+        }
+
+        return request;
     }
 
     protected async Task<byte[]> SendAsync(HttpMethod method, string path, byte[] data, bool zipped = true)
@@ -112,7 +129,12 @@ public class Client(string address, string accountId, int retries = 3)
 
         using var request = UnityWebRequest.Get(address + path);
         request.downloadHandler = new DownloadHandlerFile(filePath) { removeFileOnAbort = true };
-        request.certificateHandler = new FakeCertificateHandler();
+
+        // Add HTTP Basic Auth header if credentials are configured
+        if (HasBasicAuth)
+        {
+            request.SetRequestHeader("Authorization", BasicAuthHeaderValue);
+        }
 
         var operation = request.SendWebRequest();
         var startTime = DateTime.UtcNow;

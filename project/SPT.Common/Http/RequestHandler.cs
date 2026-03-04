@@ -20,13 +20,18 @@ public static class RequestHandler
 
         // grab required info from command args
         var args = Environment.GetCommandLineArgs();
+        string basicAuthUsername = "";
+        string basicAuthPassword = "";
 
         foreach (var arg in args)
         {
             if (arg.Contains("BackendUrl"))
             {
                 var json = arg.Replace("-config=", string.Empty);
-                Host = Json.Deserialize<ServerConfig>(json).BackendUrl;
+                var config = Json.Deserialize<ServerConfig>(json);
+                Host = config.BackendUrl;
+                basicAuthUsername = config.BasicAuthUsername ?? "";
+                basicAuthPassword = config.BasicAuthPassword ?? "";
             }
 
             if (arg.Contains("-token="))
@@ -38,7 +43,7 @@ public static class RequestHandler
         IsLocal = Host.Contains("127.0.0.1") || Host.Contains("localhost");
 
         // initialize http client
-        HttpClient = new Client(Host, SessionId);
+        HttpClient = new Client(Host, SessionId, basicAuthUsername, basicAuthPassword);
     }
 
     private static void ValidateData(string path, byte[] data)

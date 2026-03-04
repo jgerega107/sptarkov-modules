@@ -1,6 +1,5 @@
 using System.Reflection;
-using SPT.Common.Models;
-using SPT.Core.Models;
+using SPT.Common.Http;
 using SPT.Reflection.Patching;
 using UnityEngine.Networking;
 
@@ -16,8 +15,13 @@ public class UnityWebRequestPatch : ModulePatch
     [PatchPostfix]
     private static void PatchPostfix(UnityWebRequest __result)
     {
-        __result.certificateHandler = new FakeCertificateHandler();
-        __result.disposeCertificateHandlerOnDispose = true;
         __result.timeout = 15000;
+
+        // Add HTTP Basic Auth header if the client has credentials configured
+        var authHeader = RequestHandler.HttpClient.GetBasicAuthHeaderValue();
+        if (authHeader != null)
+        {
+            __result.SetRequestHeader("Authorization", authHeader);
+        }
     }
 }
