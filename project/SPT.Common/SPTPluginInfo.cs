@@ -5,6 +5,6 @@
                 {
                 public static class SPTPluginInfo
                 {
-                public const string PLUGIN_VERSION = "1.0.0.0";
+                public const string PLUGIN_VERSION = "4.0.13";
                 }
                 }

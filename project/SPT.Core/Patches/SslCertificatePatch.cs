@@ -19,6 +19,11 @@ public class SslCertificatePatch : ModulePatch
     [PatchPrefix]
     private static bool PatchPrefix(ref bool __result)
     {
+        if (!SPTCorePlugin.DisableSslValidation.Value)
+        {
+            return true; // Run original validation
+        }
+
         __result = true;
         return false; // Skip original
     }

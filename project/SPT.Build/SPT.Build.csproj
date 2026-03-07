@@ -22,7 +22,7 @@
     <ProjectReference Include="..\SPT.SinglePlayer\SPT.SinglePlayer.csproj" />
     <ProjectReference Include="..\SPT.Custom\SPT.Custom.csproj" />
   </ItemGroup>
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="pwsh -NoProfile -ExecutionPolicy Bypass ../build.ps1" WorkingDirectory="$(ProjectDir)" />
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition="'$(SkipPostBuild)' != 'true'">
+    <Exec Command="bash ../build-postbuild.sh $(ProjectDir)" WorkingDirectory="$(ProjectDir)" />
   </Target>
 </Project>

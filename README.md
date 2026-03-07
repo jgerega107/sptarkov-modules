@@ -25,13 +25,32 @@ git config --local user.email "USERNAME@SOMETHING.com"
 
 ## Requirements
 - Escape From Tarkov 39390
-- Visual Studio Code -OR- Visual Studio 2022
-- .NET 10 SDK (Any SDK above .NET 6 to be safe)
-- [PowerShell v7](https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell-on-windows)
-    - Can also be installed via: `dotnet tool update --global PowerShell`
+- [.NET SDK](https://dotnet.microsoft.com/en-us/download) (.NET 6 or newer)
 
 ## Project Setup
-Copy-paste Live EFT's `EscapeFromTarkov_Data/Managed/` folder to into this project's `Project/Shared/Managed/` folder
+Copy-paste Live EFT's `EscapeFromTarkov_Data/Managed/` folder into this project's `project/Shared/Managed/` folder.
+
+## Build (CLI — Linux / macOS / Windows)
+The `build.sh` script compiles all modules, sets the BepInEx plugin version, and produces a ready-to-deploy ZIP:
+
+```bash
+cd project
+./build.sh <VERSION>
+```
+
+For example:
+```bash
+./build.sh 4.0.13
+```
+
+This will:
+1. Build all projects in Release mode with `PLUGIN_VERSION` set to `4.0.13`
+2. Copy DLLs into `Build/` with the correct BepInEx directory layout
+3. Create `spt-modules-4.0.13.zip` containing the `BepInEx/` folder
+
+Extract the ZIP into your SPT game folder to deploy.
+
+If no version argument is provided, it defaults to `4.0.13`.
 
 ## Build (VS Code)
 1. File > Open Workspace > Modules.code-workspace
@@ -44,10 +63,11 @@ Copy-paste Live EFT's `EscapeFromTarkov_Data/Managed/` folder to into this proje
 3. Build solution
 4. Copy contents of `/Build` into SPT game folder and overwrite
 
-## Optional Build Steps (This is automatically done in our pipeline.)
-- If you need to build the modules manually and need to have the correct version given for the Dll's
-- Adjust the Build configurations or via CLI include `-p:Version="*.*.*"`
-- From CLI the command to run would be `dotnet build -c Release -p:Version="4.0.8"` this will give the dll's the correct versions.
+## Manual Version Override
+To set the plugin version when building directly with `dotnet build`:
+```bash
+dotnet build -c Release -p:BepInExPluginVersion=4.0.13
+```
 
 ## Game Setup
 1. Copy Live EFT files into a separate directory (from now on this will be referred to as the "SPT directory")

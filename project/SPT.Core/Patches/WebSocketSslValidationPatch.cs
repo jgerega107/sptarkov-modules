@@ -30,6 +30,11 @@ public class WebSocketSslValidationPatch : ModulePatch
     [PatchPrefix]
     public static bool PatchPrefix(ref bool __result)
     {
+        if (!SPTCorePlugin.DisableSslValidation.Value)
+        {
+            return true; // Run original validation
+        }
+
         // All certs are valid
         __result = true;
 
